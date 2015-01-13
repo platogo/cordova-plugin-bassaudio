@@ -80,7 +80,7 @@ void CALLBACK onSync(HSYNC handle, DWORD channel, DWORD data, void* user)
     BASS_ChannelStop(channel);
     BASS_StreamFree(channel);
 
-    NSString* js = [NSString stringWithFormat:@"setTimeout('bassaudio.onfree(%@)',0)", channel];
+    NSString* js = [NSString stringWithFormat:@"setTimeout('bassaudio.onfree(%d)',0)", channel];
     [self.commandDelegate evalJs:js];
 }
 
