@@ -1,12 +1,6 @@
 Cordova BASS Audio Library Plugin
 =================================
 
-Installation
-------------
-```
-cordova plugin add https://github.com/platogo/cdv-bassaudio
-```
-
 Usage
 -----
 ```
