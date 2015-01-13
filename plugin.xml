@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin xmlns="http://www.phonegap.com/ns/plugins/1.0"
+           id="com.platogo.cordova.bassaudio"
+      version="0.1.0">
+    <name>Cordova BASS Audio Library</name>
+    <description>Cordova BASS Audio Library</description>
+
+    <js-module src="www/bassaudio.js" name="BASSAudio">
+        <clobbers target="window.bassaudio" />
+    </js-module>
+
+    <!-- Android -->
+    <platform name="android">
+        <config-file target="res/xml/config.xml" parent="/*">
+            <feature name="BASSAudio">
+                <param name="android-package" value="com.platogo.cordova.bassaudio.BASSAudio" />
+            </feature>
+        </config-file>
+
+        <source-file src="src/android/BASSAudio.java" target-dir="src/com/platogo/cordova/bassaudio" />
+        <source-file src="src/android/BASS.java" target-dir="src/com/un4seen/bass" />
+
+        <source-file src="src/android/libs/armeabi/libbass.so" target-dir="libs/armeabi" framework="true" />
+        <source-file src="src/android/libs/armeabi-v7a/libbass.so" target-dir="libs/armeabi-v7a" framework="true" />
+        <source-file src="src/android/libs/x86/libbass.so" target-dir="libs/x86" framework="true" />
+     </platform>
+
+    <!-- iOS -->
+    <platform name="ios">
+        <config-file target="config.xml" parent="/*">
+            <feature name="BASSAudio">
+                <param name="ios-package" value="BASSAudio" />
+            </feature>
+        </config-file>
+
+        <header-file src="src/ios/BASSAudio.h" />
+        <source-file src="src/ios/BASSAudio.m" />
+        <header-file src="src/ios/bass.h" />
+
+        <framework src="AudioToolbox.framework" />
+        <framework src="CFNetwork.framework" />
+        <framework src="MobileCoreServices.framework" />
+        <framework src="src/ios/libbass.a" custom="true" />
+    </platform>
+</plugin>
