@@ -77,9 +77,8 @@ public class BASSAudio extends CordovaPlugin {
                 if (!Double.isNaN(endTime)) {
                     long endTimeInBytes = BASS.BASS_ChannelSeconds2Bytes(channel, endTime);
                     BASS.BASS_ChannelSetSync(channel, BASS.BASS_SYNC_POS, endTimeInBytes, onSync, null);
-                } else {
-                    BASS.BASS_ChannelSetSync(channel, BASS.BASS_SYNC_END, 0, onSync, null);
                 }
+                BASS.BASS_ChannelSetSync(channel, BASS.BASS_SYNC_END, 0, onSync, null);
 
                 BASS.BASS_ChannelPlay(channel, false);
 

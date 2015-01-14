@@ -53,9 +53,8 @@ void CALLBACK onSync(HSYNC handle, DWORD channel, DWORD data, void* user)
     if (optObj != nil) {
         QWORD endTimeInBytes = BASS_ChannelSeconds2Bytes(channel, [optObj doubleValue]);
         BASS_ChannelSetSync(channel, BASS_SYNC_POS, endTimeInBytes, onSync, (__bridge void *)(self));
-    } else {
-        BASS_ChannelSetSync(channel, BASS_SYNC_END, 0, onSync, (__bridge void *)(self));
     }
+    BASS_ChannelSetSync(channel, BASS_SYNC_END, 0, onSync, (__bridge void *)(self));
 
     BASS_ChannelPlay(channel, FALSE);
 
