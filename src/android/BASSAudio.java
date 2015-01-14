@@ -22,6 +22,10 @@ public class BASSAudio extends CordovaPlugin {
             if (restartTimes.containsKey(channel)) {
                 long restartTimeInBytes = BASS.BASS_ChannelSeconds2Bytes(channel, restartTimes.get(channel));
                 BASS.BASS_ChannelSetPosition(channel, restartTimeInBytes, BASS.BASS_POS_BYTE);
+
+                if (BASS.BASS_ChannelIsActive(channel) != BASS.BASS_ACTIVE_PLAYING) {
+                    BASS.BASS_ChannelPlay(channel, false);
+                }
             } else {
                 stopAndFreeChannel(channel);
             }

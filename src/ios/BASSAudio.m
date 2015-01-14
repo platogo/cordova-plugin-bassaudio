@@ -8,6 +8,10 @@ void CALLBACK onSync(HSYNC handle, DWORD channel, DWORD data, void* user)
     if (restartObj != nil) {
         QWORD restartTimeInBytes = BASS_ChannelSeconds2Bytes(channel, [restartObj doubleValue]);
         BASS_ChannelSetPosition(channel, restartTimeInBytes, BASS_POS_BYTE);
+
+        if (BASS_ChannelIsActive(channel) != BASS_ACTIVE_PLAYING) {
+            BASS_ChannelPlay(channel, FALSE);
+        }
     } else {
         [bassAudio stopAndFreeChannel:channel];
     }
