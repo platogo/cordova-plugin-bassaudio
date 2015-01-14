@@ -5,6 +5,7 @@
 
 - (void)play: (CDVInvokedUrlCommand*)command;
 - (void)stop: (CDVInvokedUrlCommand*)command;
+- (void)setVolume: (CDVInvokedUrlCommand*)command;
 
 - (void)stopAndFreeChannel: (DWORD)channel;
 

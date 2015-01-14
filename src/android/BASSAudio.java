@@ -14,6 +14,7 @@ import org.json.JSONObject;
 public class BASSAudio extends CordovaPlugin {
     public static final String ACTION_PLAY = "play";
     public static final String ACTION_STOP = "stop";
+    public static final String ACTION_VOLUME = "setVolume";
 
     private Hashtable<Integer, Double> restartTimes = new Hashtable<Integer, Double>();
 
@@ -52,6 +53,9 @@ public class BASSAudio extends CordovaPlugin {
             return true;
         } else if (action.equals(ACTION_STOP)) {
             stop(args.getInt(0), args.getInt(1), callbackContext);
+            return true;
+        } else if (action.equals(ACTION_VOLUME)) {
+            setVolume(args.getInt(0), (float) args.getDouble(1), callbackContext);
             return true;
         }
         return false;
@@ -106,6 +110,14 @@ public class BASSAudio extends CordovaPlugin {
                 } else {
                     stopAndFreeChannel(channel);
                 }
+            }
+        });
+    }
+
+    private void setVolume(final int channel, final float volume, final CallbackContext callbackContext) {
+        cordova.getThreadPool().execute(new Runnable() {
+            public void run() {
+                BASS.BASS_ChannelSetAttribute(channel, BASS.BASS_ATTRIB_VOL, volume);
             }
         });
     }

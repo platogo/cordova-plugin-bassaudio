@@ -90,6 +90,17 @@ void CALLBACK onFadeOutSync(HSYNC handle, DWORD channel, DWORD data, void* user)
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
+- (void)setVolume: (CDVInvokedUrlCommand*)command
+{
+    DWORD channel = [[command.arguments objectAtIndex:0] intValue];
+    double volume = [[command.arguments objectAtIndex:1] doubleValue];
+
+    BASS_ChannelSetAttribute(channel, BASS_ATTRIB_VOL, volume);
+
+    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
 - (void)stopAndFreeChannel: (DWORD)channel
 {
     [self.restartTimes removeObjectForKey:[@(channel) stringValue]];

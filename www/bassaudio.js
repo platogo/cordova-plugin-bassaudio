@@ -19,5 +19,13 @@ module.exports = {
             "stop", [channel, fadeout]
         );
     },
+    setVolume: function(channel, volume, successCallback, errorCallback) {
+        cordova.exec(
+            successCallback,
+            errorCallback,
+            "BASSAudio",
+            "setVolume", [channel, volume]
+        );
+    },
     onfree: function(channel) {}
 };
