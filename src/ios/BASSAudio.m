@@ -1,6 +1,6 @@
 #import "BASSAudio.h"
 
-void CALLBACK onSync(HSYNC handle, DWORD channel, DWORD data, void* user)
+void CALLBACK onPosSync(HSYNC handle, DWORD channel, DWORD data, void* user)
 {
     BASSAudio* bassAudio = (__bridge BASSAudio*) user;
     id restartObj = [bassAudio.restartTimes objectForKey:[@(channel) stringValue]];
@@ -62,9 +62,9 @@ void CALLBACK onFadeOutSync(HSYNC handle, DWORD channel, DWORD data, void* user)
     optObj = [opts objectForKey:@"endTime"];
     if (optObj != nil) {
         QWORD endTimeInBytes = BASS_ChannelSeconds2Bytes(channel, [optObj doubleValue]);
-        BASS_ChannelSetSync(channel, BASS_SYNC_POS, endTimeInBytes, onSync, (__bridge void *)(self));
+        BASS_ChannelSetSync(channel, BASS_SYNC_POS, endTimeInBytes, onPosSync, (__bridge void *)(self));
     }
-    BASS_ChannelSetSync(channel, BASS_SYNC_END, 0, onSync, (__bridge void *)(self));
+    BASS_ChannelSetSync(channel, BASS_SYNC_END, 0, onPosSync, (__bridge void *)(self));
 
     BASS_ChannelPlay(channel, FALSE);
 

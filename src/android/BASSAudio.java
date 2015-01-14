@@ -18,7 +18,7 @@ public class BASSAudio extends CordovaPlugin {
 
     private Hashtable<Integer, Double> restartTimes = new Hashtable<Integer, Double>();
 
-    private BASS.SYNCPROC onSync = new BASS.SYNCPROC() {
+    private BASS.SYNCPROC onPosSync = new BASS.SYNCPROC() {
         public void SYNCPROC(int handle, int channel, int data, Object user) {
             if (restartTimes.containsKey(channel)) {
                 long restartTimeInBytes = BASS.BASS_ChannelSeconds2Bytes(channel, restartTimes.get(channel));
@@ -90,9 +90,9 @@ public class BASSAudio extends CordovaPlugin {
                 double endTime = opts.optDouble("endTime");
                 if (!Double.isNaN(endTime)) {
                     long endTimeInBytes = BASS.BASS_ChannelSeconds2Bytes(channel, endTime);
-                    BASS.BASS_ChannelSetSync(channel, BASS.BASS_SYNC_POS, endTimeInBytes, onSync, null);
+                    BASS.BASS_ChannelSetSync(channel, BASS.BASS_SYNC_POS, endTimeInBytes, onPosSync, null);
                 }
-                BASS.BASS_ChannelSetSync(channel, BASS.BASS_SYNC_END, 0, onSync, null);
+                BASS.BASS_ChannelSetSync(channel, BASS.BASS_SYNC_END, 0, onPosSync, null);
 
                 BASS.BASS_ChannelPlay(channel, false);
 
