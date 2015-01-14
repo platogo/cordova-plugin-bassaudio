@@ -17,6 +17,12 @@ void CALLBACK onSync(HSYNC handle, DWORD channel, DWORD data, void* user)
     }
 }
 
+void CALLBACK onFadeOutSync(HSYNC handle, DWORD channel, DWORD data, void* user)
+{
+    BASSAudio* bassAudio = (__bridge BASSAudio*) user;
+    [bassAudio stopAndFreeChannel:channel];
+}
+
 @implementation BASSAudio
 
 - (void)pluginInitialize
@@ -69,6 +75,14 @@ void CALLBACK onSync(HSYNC handle, DWORD channel, DWORD data, void* user)
 - (void)stop: (CDVInvokedUrlCommand*)command
 {
     DWORD channel = [[command.arguments objectAtIndex:0] intValue];
+    DWORD fadeout = [[command.arguments objectAtIndex:1] intValue];
+
+    if (fadeout > 0) {
+        BASS_ChannelSetSync(channel, BASS_SYNC_SLIDE, 0, onFadeOutSync, (__bridge void *)(self));
+        BASS_ChannelSlideAttribute(channel, BASS_ATTRIB_VOL, 0, fadeout);
+    } else {
+        stopAndFreeChannel(channel);
+    }
 
     [self stopAndFreeChannel:channel];
 

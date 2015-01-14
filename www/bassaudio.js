@@ -9,12 +9,14 @@ module.exports = {
             "play", [fileName, opts]
         );
     },
-    stop: function(channel, successCallback, errorCallback) {
+    stop: function(channel, fadeout, successCallback, errorCallback) {
+        fadeout = fadeout || 0;
+
         cordova.exec(
             successCallback,
             errorCallback,
             "BASSAudio",
-            "stop", [channel]
+            "stop", [channel, fadeout]
         );
     },
     onfree: function(channel) {}

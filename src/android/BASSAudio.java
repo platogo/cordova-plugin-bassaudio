@@ -32,6 +32,12 @@ public class BASSAudio extends CordovaPlugin {
         }
     };
 
+    private BASS.SYNCPROC onFadeOutSync = new BASS.SYNCPROC() {
+        public void SYNCPROC(int handle, int channel, int data, Object user) {
+            stopAndFreeChannel(channel);
+        }
+    };
+
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
         super.initialize(cordova, webView);
@@ -45,7 +51,7 @@ public class BASSAudio extends CordovaPlugin {
             play(args.getString(0), args.getJSONObject(1), callbackContext);
             return true;
         } else if (action.equals(ACTION_STOP)) {
-            stop(args.getInt(0), callbackContext);
+            stop(args.getInt(0), args.getInt(1), callbackContext);
             return true;
         }
         return false;
@@ -91,10 +97,15 @@ public class BASSAudio extends CordovaPlugin {
         });
     }
 
-    private void stop(final int channel, final CallbackContext callbackContext) {
+    private void stop(final int channel, final int fadeout, final CallbackContext callbackContext) {
         cordova.getThreadPool().execute(new Runnable() {
             public void run() {
-                stopAndFreeChannel(channel);
+                if (fadeout > 0) {
+                    BASS.BASS_ChannelSetSync(channel, BASS.BASS_SYNC_SLIDE, 0, onFadeOutSync, null);
+                    BASS.BASS_ChannelSlideAttribute(channel, BASS.BASS_ATTRIB_VOL, 0, fadeout);
+                } else {
+                    stopAndFreeChannel(channel);
+                }
             }
         });
     }
