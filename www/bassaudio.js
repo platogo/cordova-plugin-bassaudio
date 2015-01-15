@@ -27,5 +27,21 @@ module.exports = {
             "setVolume", [channel, volume]
         );
     },
+    pause: function(successCallback, errorCallback) {
+        cordova.exec(
+            successCallback,
+            errorCallback,
+            "BASSAudio",
+            "pause", []
+        );
+    },
+    resume: function(successCallback, errorCallback) {
+        cordova.exec(
+            successCallback,
+            errorCallback,
+            "BASSAudio",
+            "resume", []
+        );
+    },
     onfree: function(channel) {}
 };

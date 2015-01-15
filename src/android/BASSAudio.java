@@ -12,9 +12,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 public class BASSAudio extends CordovaPlugin {
-    public static final String ACTION_PLAY = "play";
-    public static final String ACTION_STOP = "stop";
-    public static final String ACTION_VOLUME = "setVolume";
+    public static final String ACTION_PLAY      = "play";
+    public static final String ACTION_STOP      = "stop";
+    public static final String ACTION_VOLUME    = "setVolume";
+    public static final String ACTION_PAUSE     = "pause";
+    public static final String ACTION_RESUME    = "resume";
 
     private Hashtable<Integer, Double> restartTimes = new Hashtable<Integer, Double>();
 
@@ -56,6 +58,12 @@ public class BASSAudio extends CordovaPlugin {
             return true;
         } else if (action.equals(ACTION_VOLUME)) {
             setVolume(args.getInt(0), (float) args.getDouble(1), callbackContext);
+            return true;
+        } else if (action.equals(ACTION_PAUSE)) {
+            pause(callbackContext);
+            return true;
+        } else if (action.equals(ACTION_RESUME)) {
+            resume(callbackContext);
             return true;
         }
         return false;
@@ -118,6 +126,22 @@ public class BASSAudio extends CordovaPlugin {
         cordova.getThreadPool().execute(new Runnable() {
             public void run() {
                 BASS.BASS_ChannelSetAttribute(channel, BASS.BASS_ATTRIB_VOL, volume);
+            }
+        });
+    }
+
+    private void pause(final CallbackContext callbackContext) {
+        cordova.getThreadPool().execute(new Runnable() {
+            public void run() {
+                BASS.BASS_Pause();
+            }
+        });
+    }
+
+    private void resume(final CallbackContext callbackContext) {
+        cordova.getThreadPool().execute(new Runnable() {
+            public void run() {
+                BASS.BASS_Start();
             }
         });
     }
