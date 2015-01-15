@@ -8,6 +8,8 @@
 - (void)setVolume: (CDVInvokedUrlCommand*)command;
 - (void)pause: (CDVInvokedUrlCommand*)command;
 - (void)resume: (CDVInvokedUrlCommand*)command;
+- (void)mute: (CDVInvokedUrlCommand*)command;
+- (void)unmute: (CDVInvokedUrlCommand*)command;
 
 - (void)stopAndFreeChannel: (DWORD)channel;
 

@@ -43,5 +43,21 @@ module.exports = {
             "resume", []
         );
     },
+    mute: function(successCallback, errorCallback) {
+        cordova.exec(
+            successCallback,
+            errorCallback,
+            "BASSAudio",
+            "mute", []
+        );
+    },
+    unmute: function(successCallback, errorCallback) {
+        cordova.exec(
+            successCallback,
+            errorCallback,
+            "BASSAudio",
+            "unmute", []
+        );
+    },
     onfree: function(channel) {}
 };

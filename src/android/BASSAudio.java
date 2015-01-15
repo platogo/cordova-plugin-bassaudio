@@ -17,6 +17,8 @@ public class BASSAudio extends CordovaPlugin {
     public static final String ACTION_VOLUME    = "setVolume";
     public static final String ACTION_PAUSE     = "pause";
     public static final String ACTION_RESUME    = "resume";
+    public static final String ACTION_MUTE      = "mute";
+    public static final String ACTION_UNMUTE    = "unmute";
 
     private Hashtable<Integer, Double> restartTimes = new Hashtable<Integer, Double>();
 
@@ -64,6 +66,12 @@ public class BASSAudio extends CordovaPlugin {
             return true;
         } else if (action.equals(ACTION_RESUME)) {
             resume(callbackContext);
+            return true;
+        } else if (action.equals(ACTION_MUTE)) {
+            mute(callbackContext);
+            return true;
+        } else if (action.equals(ACTION_UNMUTE)) {
+            unmute(callbackContext);
             return true;
         }
         return false;
@@ -142,6 +150,22 @@ public class BASSAudio extends CordovaPlugin {
         cordova.getThreadPool().execute(new Runnable() {
             public void run() {
                 BASS.BASS_Start();
+            }
+        });
+    }
+
+    private void mute(final CallbackContext callbackContext) {
+        cordova.getThreadPool().execute(new Runnable() {
+            public void run() {
+                BASS.BASS_SetVolume(0);
+            }
+        });
+    }
+
+    private void unmute(final CallbackContext callbackContext) {
+        cordova.getThreadPool().execute(new Runnable() {
+            public void run() {
+                BASS.BASS_SetVolume(1);
             }
         });
     }
