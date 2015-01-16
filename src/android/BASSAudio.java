@@ -80,7 +80,12 @@ public class BASSAudio extends CordovaPlugin {
     private void play(final String fileName, final JSONObject opts, final CallbackContext callbackContext) {
         cordova.getThreadPool().execute(new Runnable() {
             public void run() {
-                int channel = BASS.BASS_StreamCreateFile(fileName, 0, 0, 0);
+                int channel;
+                if (opts.optBoolean("androidAsset")) {
+                    channel = BASS.BASS_StreamCreateFile(new BASS.Asset(cordova.getActivity().getAssets(), fileName), 0, 0, 0);
+                } else {
+                    channel = BASS.BASS_StreamCreateFile(fileName, 0, 0, 0);
+                }
 
                 float volume = (float) opts.optDouble("volume");
                 if (!Float.isNaN(volume)) {
