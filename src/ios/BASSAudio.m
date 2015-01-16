@@ -81,10 +81,8 @@ void CALLBACK onFadeOutSync(HSYNC handle, DWORD channel, DWORD data, void* user)
         BASS_ChannelSetSync(channel, BASS_SYNC_SLIDE, 0, onFadeOutSync, (__bridge void *)(self));
         BASS_ChannelSlideAttribute(channel, BASS_ATTRIB_VOL, 0, fadeout);
     } else {
-        stopAndFreeChannel(channel);
+        [self stopAndFreeChannel:channel];
     }
-
-    [self stopAndFreeChannel:channel];
 
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
