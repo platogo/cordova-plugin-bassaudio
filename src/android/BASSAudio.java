@@ -162,7 +162,7 @@ public class BASSAudio extends CordovaPlugin {
     private void mute(final CallbackContext callbackContext) {
         cordova.getThreadPool().execute(new Runnable() {
             public void run() {
-                BASS.BASS_SetVolume(0);
+                BASS.BASS_SetConfig(BASS.BASS_CONFIG_GVOL_STREAM, 0);
             }
         });
     }
@@ -170,7 +170,7 @@ public class BASSAudio extends CordovaPlugin {
     private void unmute(final CallbackContext callbackContext) {
         cordova.getThreadPool().execute(new Runnable() {
             public void run() {
-                BASS.BASS_SetVolume(1);
+                BASS.BASS_SetConfig(BASS.BASS_CONFIG_GVOL_STREAM, 10000);
             }
         });
     }
