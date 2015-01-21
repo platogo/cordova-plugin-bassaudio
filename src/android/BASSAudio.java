@@ -20,12 +20,12 @@ public class BASSAudio extends CordovaPlugin {
     public static final String ACTION_MUTE      = "mute";
     public static final String ACTION_UNMUTE    = "unmute";
 
-    private Hashtable<Integer, Double> restartTimes = new Hashtable<Integer, Double>();
+    private Hashtable<Integer, Integer> restartTimes = new Hashtable<Integer, Integer>();
 
     private BASS.SYNCPROC onPosSync = new BASS.SYNCPROC() {
         public void SYNCPROC(int handle, int channel, int data, Object user) {
             if (restartTimes.containsKey(channel)) {
-                long restartTimeInBytes = BASS.BASS_ChannelSeconds2Bytes(channel, restartTimes.get(channel));
+                long restartTimeInBytes = BASS.BASS_ChannelSeconds2Bytes(channel, restartTimes.get(channel) / 1000.0);
                 BASS.BASS_ChannelSetPosition(channel, restartTimeInBytes, BASS.BASS_POS_BYTE);
 
                 if (BASS.BASS_ChannelIsActive(channel) != BASS.BASS_ACTIVE_PLAYING) {
@@ -97,20 +97,20 @@ public class BASSAudio extends CordovaPlugin {
                     BASS.BASS_ChannelSetAttribute(channel, BASS.BASS_ATTRIB_PAN, pan);
                 }
 
-                double startTime = opts.optDouble("startTime");
-                if (!Double.isNaN(startTime)) {
-                    long startTimeInBytes = BASS.BASS_ChannelSeconds2Bytes(channel, startTime);
+                int startTime = opts.optInt("startTime", -1);
+                if (startTime != -1) {
+                    long startTimeInBytes = BASS.BASS_ChannelSeconds2Bytes(channel, startTime / 1000.0);
                     BASS.BASS_ChannelSetPosition(channel, startTimeInBytes, BASS.BASS_POS_BYTE);
                 }
 
-                double restartTime = opts.optDouble("restartTime");
-                if (!Double.isNaN(restartTime)) {
+                int restartTime = opts.optInt("restartTime", -1);
+                if (restartTime != -1) {
                     restartTimes.put(channel, restartTime);
                 }
 
-                double endTime = opts.optDouble("endTime");
-                if (!Double.isNaN(endTime)) {
-                    long endTimeInBytes = BASS.BASS_ChannelSeconds2Bytes(channel, endTime);
+                int endTime = opts.optInt("endTime", -1);
+                if (endTime != -1) {
+                    long endTimeInBytes = BASS.BASS_ChannelSeconds2Bytes(channel, endTime / 1000.0);
                     BASS.BASS_ChannelSetSync(channel, BASS.BASS_SYNC_POS, endTimeInBytes, onPosSync, null);
                 }
                 BASS.BASS_ChannelSetSync(channel, BASS.BASS_SYNC_END, 0, onPosSync, null);

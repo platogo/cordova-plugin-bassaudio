@@ -6,7 +6,7 @@ void CALLBACK onPosSync(HSYNC handle, DWORD channel, DWORD data, void* user)
     id restartObj = [bassAudio.restartTimes objectForKey:[@(channel) stringValue]];
 
     if (restartObj != nil) {
-        QWORD restartTimeInBytes = BASS_ChannelSeconds2Bytes(channel, [restartObj doubleValue]);
+        QWORD restartTimeInBytes = BASS_ChannelSeconds2Bytes(channel, [restartObj intValue] / 1000.0);
         BASS_ChannelSetPosition(channel, restartTimeInBytes, BASS_POS_BYTE);
 
         if (BASS_ChannelIsActive(channel) != BASS_ACTIVE_PLAYING) {
@@ -50,7 +50,7 @@ void CALLBACK onFadeOutSync(HSYNC handle, DWORD channel, DWORD data, void* user)
 
     optObj = [opts objectForKey:@"startTime"];
     if (optObj != nil) {
-        QWORD startTimeInBytes = BASS_ChannelSeconds2Bytes(channel, [optObj doubleValue]);
+        QWORD startTimeInBytes = BASS_ChannelSeconds2Bytes(channel, [optObj intValue] / 1000.0);
         BASS_ChannelSetPosition(channel, startTimeInBytes, BASS_POS_BYTE);
     }
 
@@ -61,7 +61,7 @@ void CALLBACK onFadeOutSync(HSYNC handle, DWORD channel, DWORD data, void* user)
 
     optObj = [opts objectForKey:@"endTime"];
     if (optObj != nil) {
-        QWORD endTimeInBytes = BASS_ChannelSeconds2Bytes(channel, [optObj doubleValue]);
+        QWORD endTimeInBytes = BASS_ChannelSeconds2Bytes(channel, [optObj intValue] / 1000.0);
         BASS_ChannelSetSync(channel, BASS_SYNC_POS, endTimeInBytes, onPosSync, (__bridge void *)(self));
     }
     BASS_ChannelSetSync(channel, BASS_SYNC_END, 0, onPosSync, (__bridge void *)(self));
