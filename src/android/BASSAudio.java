@@ -88,12 +88,12 @@ public class BASSAudio extends CordovaPlugin {
                 }
 
                 float volume = (float) opts.optDouble("volume");
-                if (!Float.isNaN(volume)) {
+                if (!Double.isNaN(volume)) {
                     BASS.BASS_ChannelSetAttribute(channel, BASS.BASS_ATTRIB_VOL, volume);
                 }
 
                 float pan = (float) opts.optDouble("pan");
-                if (!Float.isNaN(pan)) {
+                if (!Double.isNaN(pan)) {
                     BASS.BASS_ChannelSetAttribute(channel, BASS.BASS_ATTRIB_PAN, pan);
                 }
 
