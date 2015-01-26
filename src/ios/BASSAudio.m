@@ -28,6 +28,8 @@ void CALLBACK onFadeOutSync(HSYNC handle, DWORD channel, DWORD data, void* user)
 - (void)pluginInitialize
 {
     BASS_Init(-1, 44100, 0, 0, NULL);
+    BASS_SetConfig(BASS_CONFIG_IOS_MIXAUDIO, 4);
+
     self.restartTimes = [[NSMutableDictionary alloc] init];
 }
 
