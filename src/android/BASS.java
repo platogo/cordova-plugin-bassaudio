@@ -1,6 +1,6 @@
 /*
 	BASS 2.4 Java class
-	Copyright (c) 1999-2014 Un4seen Developments Ltd.
+	Copyright (c) 1999-2016 Un4seen Developments Ltd.
 
 	See the BASS.CHM file for more detailed documentation
 */
@@ -86,15 +86,19 @@ public class BASS
 	public static final int BASS_CONFIG_OGG_PRESCAN = 47;
 	public static final int BASS_CONFIG_DEV_NONSTOP = 50;
 	public static final int BASS_CONFIG_VERIFY_NET = 52;
+	public static final int BASS_CONFIG_DEV_PERIOD = 53;
+	public static final int BASS_CONFIG_FLOAT = 54;
+	public static final int BASS_CONFIG_NET_SEEK = 56;
 
 	// BASS_SetConfigPtr options
 	public static final int BASS_CONFIG_NET_AGENT = 16;
 	public static final int BASS_CONFIG_NET_PROXY = 17;
 
 	// BASS_Init flags
-	public static final int BASS_DEVICE_8BITS = 1;	// 8 bit resolution, else 16 bit
-	public static final int BASS_DEVICE_MONO = 2;	// mono, else stereo
+	public static final int BASS_DEVICE_8BITS = 1;	// 8 bit
+	public static final int BASS_DEVICE_MONO = 2;	// mono
 	public static final int BASS_DEVICE_3D = 4;	// enable 3D functionality
+	public static final int BASS_DEVICE_16BITS = 8;		// limit output to 16 bit
 	public static final int BASS_DEVICE_LATENCY = 0x100;	// calculate device latency (BASS_INFO struct)
 	public static final int BASS_DEVICE_SPEAKERS = 0x800; // force enabling of speaker assignment
 	public static final int BASS_DEVICE_NOSPEAKER = 0x1000; // ignore speaker arrangement
@@ -193,6 +197,7 @@ public class BASS
 	public static final int BASS_MUSIC_RAMPS = 0x400;	// sensitive ramping
 	public static final int BASS_MUSIC_SURROUND = 0x800;	// surround sound
 	public static final int BASS_MUSIC_SURROUND2 = 0x1000;	// surround sound (mode 2)
+	public static final int BASS_MUSIC_FT2PAN = 0x2000; // apply FastTracker 2 panning to XM files
 	public static final int BASS_MUSIC_FT2MOD = 0x2000;	// play .MOD as FastTracker 2 does
 	public static final int BASS_MUSIC_PT1MOD = 0x4000;	// play .MOD as ProTracker 1 does
 	public static final int BASS_MUSIC_NONINTER = 0x10000;	// non-interpolated sample mixing
@@ -358,8 +363,8 @@ public class BASS
 	public static final int BASS_SYNC_MUSICINST = 1;
 	public static final int BASS_SYNC_MUSICFX = 3;
 	public static final int BASS_SYNC_OGG_CHANGE = 12;
-	public static final int BASS_SYNC_MIXTIME = 0x40000000;	// FLAG: sync at mixtime, else at playtime
-	public static final int BASS_SYNC_ONETIME = 0x80000000;	// FLAG: sync only once, else continuously
+	public static final int BASS_SYNC_MIXTIME = 0x40000000;	// flag: sync at mixtime, else at playtime
+	public static final int BASS_SYNC_ONETIME = 0x80000000;	// flag: sync only once, else continuously
 
 	public interface SYNCPROC
 	{
@@ -415,6 +420,8 @@ public class BASS
 	public static final int BASS_ATTRIB_SRC = 8;
 	public static final int BASS_ATTRIB_NET_RESUME = 9;
 	public static final int BASS_ATTRIB_SCANINFO = 10;
+	public static final int BASS_ATTRIB_NORAMP = 11;
+	public static final int BASS_ATTRIB_BITRATE = 12;
 	public static final int BASS_ATTRIB_MUSIC_AMPLIFY = 0x100;
 	public static final int BASS_ATTRIB_MUSIC_PANSEP = 0x101;
 	public static final int BASS_ATTRIB_MUSIC_PSCALER = 0x102;
@@ -435,6 +442,7 @@ public class BASS
 	public static final int BASS_DATA_FFT4096 = 0x80000004;	// 4096 FFT
 	public static final int BASS_DATA_FFT8192 = 0x80000005;	// 8192 FFT
 	public static final int BASS_DATA_FFT16384 = 0x80000006;	// 16384 FFT
+	public static final int BASS_DATA_FFT32768 = 0x80000007;	// 32768 FFT
 	public static final int BASS_DATA_FFT_INDIVIDUAL = 0x10;	// FFT flag: FFT for each channel, else all combined
 	public static final int BASS_DATA_FFT_NOWINDOW = 0x20;	// FFT flag: no Hanning window
 	public static final int BASS_DATA_FFT_REMOVEDC = 0x40;	// FFT flag: pre-remove DC bias
@@ -465,8 +473,10 @@ public class BASS
 	public static final int BASS_TAG_MUSIC_NAME = 0x10000;	// MOD music name : String
 	public static final int BASS_TAG_MUSIC_MESSAGE = 0x10001;	// MOD message : String
 	public static final int BASS_TAG_MUSIC_ORDERS = 0x10002;	// MOD order list : ByteBuffer
+	public static final int BASS_TAG_MUSIC_AUTH = 0x10003;	// MOD author : UTF-8 string
 	public static final int BASS_TAG_MUSIC_INST = 0x10100;	// + instrument #, MOD instrument name : String
 	public static final int BASS_TAG_MUSIC_SAMPLE = 0x10300;	// + sample #, MOD sample name : String
+	public static final int BASS_TAG_BYTEBUFFER = 0x10000000;	// flag: return a ByteBuffer instead of a String or TAG_ID3
 
 	// ID3v1 tag structure
 	public static class TAG_ID3 {
@@ -678,6 +688,7 @@ public class BASS
 	public static native boolean BASS_FXSetParameters(int handle, Object params);
 	public static native boolean BASS_FXGetParameters(int handle, Object params);
 	public static native boolean BASS_FXReset(int handle);
+	public static native boolean BASS_FXSetPriority(int handle, int priority);
 
 	public static class Utils {
 		public static int LOBYTE(int n) { return n&0xff; }
