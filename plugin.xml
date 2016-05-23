@@ -36,10 +36,11 @@
         <header-file src="src/ios/BASSAudio.h" />
         <source-file src="src/ios/BASSAudio.m" />
         <header-file src="src/ios/bass.h" />
+        <source-file src="src/ios/libbass.a" framework="true"/>
+        <!-- This does not work: <framework src="src/ios/libbass.a" custom="true" /> -->
 
         <framework src="AudioToolbox.framework" />
         <framework src="CFNetwork.framework" />
         <framework src="MobileCoreServices.framework" />
-        <framework src="src/ios/libbass.a" custom="true" />
     </platform>
 </plugin>
