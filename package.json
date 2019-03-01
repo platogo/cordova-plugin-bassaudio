@@ -1,0 +1,27 @@
+{
+  "name": "cordova-plugin-bassaudio",
+  "version": "0.1.0",
+  "description": "Cordova BASS Audio Library",
+  "cordova": {
+    "id": "cordova-plugin-bassaudio",
+    "platforms": [
+      "android",
+      "ios"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/platogo/cordova-plugin-bassaudio.git"
+  },
+  "keywords": [
+    "ecosystem:cordova",
+    "cordova-android",
+    "cordova-ios"
+  ],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/platogo/cordova-plugin-bassaudio/issues"
+  },
+  "homepage": "https://github.com/platogo/cordova-plugin-bassaudio#readme"
+}
