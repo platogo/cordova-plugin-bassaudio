@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<plugin xmlns="http://www.phonegap.com/ns/plugins/1.0"
-           id="cordova-plugin-bassaudio"
-      version="0.1.0">
+<plugin xmlns="http://www.phonegap.com/ns/plugins/1.0" id="cordova-plugin-bassaudio" version="0.1.0">
     <name>Cordova BASS Audio Library</name>
     <description>Cordova BASS Audio Library</description>
 
@@ -25,7 +23,7 @@
         <source-file src="src/android/libs/x86/libbass.so" target-dir="libs/x86" framework="true" />
         <source-file src="src/android/libs/x86_64/libbass.so" target-dir="libs/x86_64" framework="true" />
         <source-file src="src/android/libs/arm64-v8a/libbass.so" target-dir="libs/arm64-v8a" framework="true" />
-     </platform>
+    </platform>
 
     <!-- iOS -->
     <platform name="ios">
@@ -38,8 +36,9 @@
         <header-file src="src/ios/BASSAudio.h" />
         <source-file src="src/ios/BASSAudio.m" />
         <header-file src="src/ios/bass.h" />
-        <source-file src="src/ios/libbass.a" framework="true"/>
-        <!-- This does not work: <framework src="src/ios/libbass.a" custom="true" /> -->
+
+        <framework src="src/ios/libbass.dylib" embed="true" custom="true" />
+        <framework src="src/ios/bass.xcframework" embed="true" custom="true" link="true" />
 
         <framework src="Accelerate.framework" />
         <framework src="AudioToolbox.framework" />
