@@ -37,7 +37,6 @@
         <source-file src="src/ios/BASSAudio.m" />
         <header-file src="src/ios/bass.h" />
 
-        <framework src="src/ios/libbass.dylib" embed="true" custom="true" />
         <framework src="src/ios/bass.xcframework" embed="true" custom="true" link="true" />
 
         <framework src="Accelerate.framework" />
