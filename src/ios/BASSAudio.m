@@ -1,4 +1,5 @@
 #import "BASSAudio.h"
+#import "AVFoundation/AVAudioSession.h"
 
 void CALLBACK onPosSync(HSYNC handle, DWORD channel, DWORD data, void* user)
 {
@@ -27,51 +28,82 @@ void CALLBACK onFadeOutSync(HSYNC handle, DWORD channel, DWORD data, void* user)
 
 - (void)pluginInitialize
 {
-    BASS_Init(-1, 44100, 0, 0, NULL);
-    BASS_SetConfig(BASS_CONFIG_IOS_MIXAUDIO, 4);
+    NSError *error = nil;
+    AVAudioSession *session = [AVAudioSession sharedInstance];
+
+    [session setCategory:AVAudioSessionCategoryAmbient
+             withOptions:AVAudioSessionCategoryOptionMixWithOthers
+                   error:&error];
+
+    [session setActive:YES error:&error];
+
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        BASS_Init(-1, 44100, 0, 0, NULL);
+        BASS_SetConfig(BASS_CONFIG_IOS_MIXAUDIO, 4);
+    });
 
     self.restartTimes = [[NSMutableDictionary alloc] init];
 }
 
 - (void)play: (CDVInvokedUrlCommand*)command
 {
-    NSString* fileName = [command.arguments objectAtIndex:0];
-    NSDictionary* opts = [command.arguments objectAtIndex:1];
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        NSError *error = nil;
+        [[AVAudioSession sharedInstance] setActive:YES error:&error];
+        BASS_Start();
 
-    HSTREAM channel = BASS_StreamCreateFile(FALSE, [fileName UTF8String], 0, 0, 0);
+        NSString* fileName = [command.arguments objectAtIndex:0];
+        NSDictionary* opts = [command.arguments objectAtIndex:1];
 
-    id optObj = [opts objectForKey:@"volume"];
-    if (optObj != nil) {
-        BASS_ChannelSetAttribute(channel, BASS_ATTRIB_VOL, [optObj doubleValue]);
-    }
+        HSTREAM channel = BASS_StreamCreateFile(FALSE, [fileName UTF8String], 0, 0, 0);
 
-    optObj = [opts objectForKey:@"pan"];
-    if (optObj != nil) {
-        BASS_ChannelSetAttribute(channel, BASS_ATTRIB_PAN, [optObj doubleValue]);
-    }
+        if (channel == 0) {
+            int errorCode = BASS_ErrorGetCode();
+            NSLog(@"BASS Stream Creation Failed: %d", errorCode);
 
-    optObj = [opts objectForKey:@"startTime"];
-    if (optObj != nil) {
-        QWORD startTimeInBytes = BASS_ChannelSeconds2Bytes(channel, [optObj intValue] / 1000.0);
-        BASS_ChannelSetPosition(channel, startTimeInBytes, BASS_POS_BYTE);
-    }
+            dispatch_async(dispatch_get_main_queue(), ^(void) {
+                CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsInt:errorCode];
+                [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+            });
+            return;
+        }
 
-    optObj = [opts objectForKey:@"restartTime"];
-    if (optObj != nil) {
-        [self.restartTimes setObject:optObj forKey:[@(channel) stringValue]];
-    }
+        id optObj = [opts objectForKey:@"volume"];
+        if (optObj != nil) {
+            BASS_ChannelSetAttribute(channel, BASS_ATTRIB_VOL, [optObj doubleValue]);
+        }
 
-    optObj = [opts objectForKey:@"endTime"];
-    if (optObj != nil) {
-        QWORD endTimeInBytes = BASS_ChannelSeconds2Bytes(channel, [optObj intValue] / 1000.0);
-        BASS_ChannelSetSync(channel, BASS_SYNC_POS, endTimeInBytes, onPosSync, (__bridge void *)(self));
-    }
-    BASS_ChannelSetSync(channel, BASS_SYNC_END, 0, onPosSync, (__bridge void *)(self));
+        optObj = [opts objectForKey:@"pan"];
+        if (optObj != nil) {
+            BASS_ChannelSetAttribute(channel, BASS_ATTRIB_PAN, [optObj doubleValue]);
+        }
 
-    BASS_ChannelPlay(channel, FALSE);
+        optObj = [opts objectForKey:@"startTime"];
+        if (optObj != nil) {
+            QWORD startTimeInBytes = BASS_ChannelSeconds2Bytes(channel, [optObj intValue] / 1000.0);
+            BASS_ChannelSetPosition(channel, startTimeInBytes, BASS_POS_BYTE);
+        }
 
-    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsInt:channel];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        optObj = [opts objectForKey:@"restartTime"];
+        if (optObj != nil) {
+            [self.restartTimes setObject:optObj forKey:[@(channel) stringValue]];
+        }
+
+        optObj = [opts objectForKey:@"endTime"];
+        if (optObj != nil) {
+            QWORD endTimeInBytes = BASS_ChannelSeconds2Bytes(channel, [optObj intValue] / 1000.0);
+            BASS_ChannelSetSync(channel, BASS_SYNC_POS, endTimeInBytes, onPosSync, (__bridge void *)(self));
+        }
+
+        BASS_ChannelSetSync(channel, BASS_SYNC_END, 0, onPosSync, (__bridge void *)(self));
+
+        BASS_ChannelPlay(channel, FALSE);
+
+        dispatch_async(dispatch_get_main_queue(), ^(void) {
+            CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsInt:channel];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        });
+    });
 }
 
 - (void)stop: (CDVInvokedUrlCommand*)command
@@ -103,45 +135,64 @@ void CALLBACK onFadeOutSync(HSYNC handle, DWORD channel, DWORD data, void* user)
 
 - (void)pause: (CDVInvokedUrlCommand*)command
 {
-    BASS_Pause();
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        BASS_Pause();
 
-    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        dispatch_async(dispatch_get_main_queue(), ^(void) {
+            CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        });
+    });
 }
 
 - (void)resume: (CDVInvokedUrlCommand*)command
 {
-    BASS_Start();
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        BASS_Start();
 
-    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        dispatch_async(dispatch_get_main_queue(), ^(void) {
+            CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        });
+    });
 }
 
 - (void)mute: (CDVInvokedUrlCommand*)command
 {
-    BASS_SetConfig(BASS_CONFIG_GVOL_STREAM, 0);
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        BASS_SetConfig(BASS_CONFIG_GVOL_STREAM, 0);
 
-    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        dispatch_async(dispatch_get_main_queue(), ^(void) {
+            CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        });
+    });
 }
 
 - (void)unmute: (CDVInvokedUrlCommand*)command
 {
-    BASS_SetConfig(BASS_CONFIG_GVOL_STREAM, 10000);
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        BASS_SetConfig(BASS_CONFIG_GVOL_STREAM, 10000);
 
-    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        dispatch_async(dispatch_get_main_queue(), ^(void) {
+            CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        });
+    });
 }
 
 - (void)stopAndFreeChannel: (DWORD)channel
 {
     [self.restartTimes removeObjectForKey:[@(channel) stringValue]];
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        BASS_ChannelStop(channel);
+        BASS_StreamFree(channel);
 
-    BASS_ChannelStop(channel);
-    BASS_StreamFree(channel);
-
-    NSString* js = [NSString stringWithFormat:@"setTimeout('bassaudio.onfree(%d)',0)", channel];
-    [self.commandDelegate evalJs:js];
+        dispatch_async(dispatch_get_main_queue(), ^(void) {
+            NSString* js = [NSString stringWithFormat:@"setTimeout('bassaudio.onfree(%d)',0)", channel];
+            [self.commandDelegate evalJs:js];
+        });
+    });
 }
 
 @end
