@@ -1,21 +1,32 @@
 #import "BASSAudio.h"
 #import "AVFoundation/AVAudioSession.h"
 
+@interface BASSAudio ()
+
+@property (strong, nonatomic) dispatch_queue_t bassQueue;
+
+- (BOOL)activateAudioSessionAndStartBASSForCommand: (CDVInvokedUrlCommand*)command;
+- (void)stopAndFreeChannelOnBASSQueue: (DWORD)channel;
+
+@end
+
 void CALLBACK onPosSync(HSYNC handle, DWORD channel, DWORD data, void* user)
 {
     BASSAudio* bassAudio = (__bridge BASSAudio*) user;
-    id restartObj = [bassAudio.restartTimes objectForKey:[@(channel) stringValue]];
+    dispatch_async(bassAudio.bassQueue, ^{
+        id restartObj = [bassAudio.restartTimes objectForKey:[@(channel) stringValue]];
 
-    if (restartObj != nil) {
-        QWORD restartTimeInBytes = BASS_ChannelSeconds2Bytes(channel, [restartObj intValue] / 1000.0);
-        BASS_ChannelSetPosition(channel, restartTimeInBytes, BASS_POS_BYTE);
+        if (restartObj != nil) {
+            QWORD restartTimeInBytes = BASS_ChannelSeconds2Bytes(channel, [restartObj intValue] / 1000.0);
+            BASS_ChannelSetPosition(channel, restartTimeInBytes, BASS_POS_BYTE);
 
-        if (BASS_ChannelIsActive(channel) != BASS_ACTIVE_PLAYING) {
-            BASS_ChannelPlay(channel, FALSE);
+            if (BASS_ChannelIsActive(channel) != BASS_ACTIVE_PLAYING) {
+                BASS_ChannelPlay(channel, FALSE);
+            }
+        } else {
+            [bassAudio stopAndFreeChannelOnBASSQueue:channel];
         }
-    } else {
-        [bassAudio stopAndFreeChannel:channel];
-    }
+    });
 }
 
 void CALLBACK onFadeOutSync(HSYNC handle, DWORD channel, DWORD data, void* user)
@@ -28,6 +39,9 @@ void CALLBACK onFadeOutSync(HSYNC handle, DWORD channel, DWORD data, void* user)
 
 - (void)pluginInitialize
 {
+    self.bassQueue = dispatch_queue_create("com.platogo.cordova.bassaudio.bass", DISPATCH_QUEUE_SERIAL);
+    self.restartTimes = [[NSMutableDictionary alloc] init];
+
     NSError *error = nil;
     AVAudioSession *session = [AVAudioSession sharedInstance];
 
@@ -37,20 +51,18 @@ void CALLBACK onFadeOutSync(HSYNC handle, DWORD channel, DWORD data, void* user)
 
     [session setActive:YES error:&error];
 
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    dispatch_async(self.bassQueue, ^{
         BASS_Init(-1, 44100, 0, 0, NULL);
         BASS_SetConfig(BASS_CONFIG_IOS_MIXAUDIO, 4);
     });
-
-    self.restartTimes = [[NSMutableDictionary alloc] init];
 }
 
 - (void)play: (CDVInvokedUrlCommand*)command
 {
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        NSError *error = nil;
-        [[AVAudioSession sharedInstance] setActive:YES error:&error];
-        BASS_Start();
+    dispatch_async(self.bassQueue, ^{
+        if (![self activateAudioSessionAndStartBASSForCommand:command]) {
+            return;
+        }
 
         NSString* fileName = [command.arguments objectAtIndex:0];
         NSDictionary* opts = [command.arguments objectAtIndex:1];
@@ -111,15 +123,19 @@ void CALLBACK onFadeOutSync(HSYNC handle, DWORD channel, DWORD data, void* user)
     DWORD channel = [[command.arguments objectAtIndex:0] intValue];
     DWORD fadeout = [[command.arguments objectAtIndex:1] intValue];
 
-    if (fadeout > 0) {
-        BASS_ChannelSetSync(channel, BASS_SYNC_SLIDE, 0, onFadeOutSync, (__bridge void *)(self));
-        BASS_ChannelSlideAttribute(channel, BASS_ATTRIB_VOL, 0, fadeout);
-    } else {
-        [self stopAndFreeChannel:channel];
-    }
+    dispatch_async(self.bassQueue, ^{
+        if (fadeout > 0) {
+            BASS_ChannelSetSync(channel, BASS_SYNC_SLIDE, 0, onFadeOutSync, (__bridge void *)(self));
+            BASS_ChannelSlideAttribute(channel, BASS_ATTRIB_VOL, 0, fadeout);
+        } else {
+            [self stopAndFreeChannelOnBASSQueue:channel];
+        }
 
-    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        dispatch_async(dispatch_get_main_queue(), ^(void) {
+            CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        });
+    });
 }
 
 - (void)setVolume: (CDVInvokedUrlCommand*)command
@@ -127,15 +143,19 @@ void CALLBACK onFadeOutSync(HSYNC handle, DWORD channel, DWORD data, void* user)
     DWORD channel = [[command.arguments objectAtIndex:0] intValue];
     double volume = [[command.arguments objectAtIndex:1] doubleValue];
 
-    BASS_ChannelSetAttribute(channel, BASS_ATTRIB_VOL, volume);
+    dispatch_async(self.bassQueue, ^{
+        BASS_ChannelSetAttribute(channel, BASS_ATTRIB_VOL, volume);
 
-    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        dispatch_async(dispatch_get_main_queue(), ^(void) {
+            CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        });
+    });
 }
 
 - (void)pause: (CDVInvokedUrlCommand*)command
 {
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    dispatch_async(self.bassQueue, ^{
         BASS_Pause();
 
         dispatch_async(dispatch_get_main_queue(), ^(void) {
@@ -147,8 +167,10 @@ void CALLBACK onFadeOutSync(HSYNC handle, DWORD channel, DWORD data, void* user)
 
 - (void)resume: (CDVInvokedUrlCommand*)command
 {
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        BASS_Start();
+    dispatch_async(self.bassQueue, ^{
+        if (![self activateAudioSessionAndStartBASSForCommand:command]) {
+            return;
+        }
 
         dispatch_async(dispatch_get_main_queue(), ^(void) {
             CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
@@ -159,7 +181,7 @@ void CALLBACK onFadeOutSync(HSYNC handle, DWORD channel, DWORD data, void* user)
 
 - (void)mute: (CDVInvokedUrlCommand*)command
 {
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    dispatch_async(self.bassQueue, ^{
         BASS_SetConfig(BASS_CONFIG_GVOL_STREAM, 0);
 
         dispatch_async(dispatch_get_main_queue(), ^(void) {
@@ -171,7 +193,7 @@ void CALLBACK onFadeOutSync(HSYNC handle, DWORD channel, DWORD data, void* user)
 
 - (void)unmute: (CDVInvokedUrlCommand*)command
 {
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    dispatch_async(self.bassQueue, ^{
         BASS_SetConfig(BASS_CONFIG_GVOL_STREAM, 10000);
 
         dispatch_async(dispatch_get_main_queue(), ^(void) {
@@ -183,16 +205,40 @@ void CALLBACK onFadeOutSync(HSYNC handle, DWORD channel, DWORD data, void* user)
 
 - (void)stopAndFreeChannel: (DWORD)channel
 {
+    dispatch_async(self.bassQueue, ^{
+        [self stopAndFreeChannelOnBASSQueue:channel];
+    });
+}
+
+- (void)stopAndFreeChannelOnBASSQueue: (DWORD)channel
+{
     [self.restartTimes removeObjectForKey:[@(channel) stringValue]];
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        BASS_ChannelStop(channel);
-        BASS_StreamFree(channel);
+
+    BASS_ChannelStop(channel);
+    BASS_StreamFree(channel);
+
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
+        NSString* js = [NSString stringWithFormat:@"setTimeout('bassaudio.onfree(%d)',0)", channel];
+        [self.commandDelegate evalJs:js];
+    });
+}
+
+- (BOOL)activateAudioSessionAndStartBASSForCommand: (CDVInvokedUrlCommand*)command
+{
+    NSError *error = nil;
+    [[AVAudioSession sharedInstance] setActive:YES error:&error];
+
+    if (error != nil || !BASS_Start()) {
+        int errorCode = error != nil ? BASS_ERROR_START : BASS_ErrorGetCode();
 
         dispatch_async(dispatch_get_main_queue(), ^(void) {
-            NSString* js = [NSString stringWithFormat:@"setTimeout('bassaudio.onfree(%d)',0)", channel];
-            [self.commandDelegate evalJs:js];
+            CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsInt:errorCode];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
         });
-    });
+        return NO;
+    }
+
+    return YES;
 }
 
 @end
