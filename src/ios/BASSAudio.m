@@ -6,6 +6,7 @@
 @property (strong, nonatomic) dispatch_queue_t bassQueue;
 
 - (BOOL)activateAudioSessionAndStartBASSForCommand: (CDVInvokedUrlCommand*)command;
+- (BOOL)ensureBASSInitializedForCommand: (CDVInvokedUrlCommand*)command;
 - (void)stopAndFreeChannelOnBASSQueue: (DWORD)channel;
 
 @end
@@ -225,6 +226,10 @@ void CALLBACK onFadeOutSync(HSYNC handle, DWORD channel, DWORD data, void* user)
 
 - (BOOL)activateAudioSessionAndStartBASSForCommand: (CDVInvokedUrlCommand*)command
 {
+    if (![self ensureBASSInitializedForCommand:command]) {
+        return NO;
+    }
+
     NSError *error = nil;
     [[AVAudioSession sharedInstance] setActive:YES error:&error];
 
@@ -238,6 +243,26 @@ void CALLBACK onFadeOutSync(HSYNC handle, DWORD channel, DWORD data, void* user)
         return NO;
     }
 
+    return YES;
+}
+
+- (BOOL)ensureBASSInitializedForCommand: (CDVInvokedUrlCommand*)command
+{
+    if (BASS_GetVersion() != 0) {
+        return YES;
+    }
+
+    if (!BASS_Init(-1, 44100, 0, 0, NULL)) {
+        int errorCode = BASS_ErrorGetCode();
+
+        dispatch_async(dispatch_get_main_queue(), ^(void) {
+            CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsInt:errorCode];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        });
+        return NO;
+    }
+
+    BASS_SetConfig(BASS_CONFIG_IOS_MIXAUDIO, 4);
     return YES;
 }
 
