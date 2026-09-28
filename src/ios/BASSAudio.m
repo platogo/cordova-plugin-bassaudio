@@ -42,17 +42,16 @@ void CALLBACK onFadeOutSync(HSYNC handle, DWORD channel, DWORD data, void* user)
 {
     self.bassQueue = dispatch_queue_create("com.platogo.cordova.bassaudio.bass", DISPATCH_QUEUE_SERIAL);
     self.restartTimes = [[NSMutableDictionary alloc] init];
-
-    NSError *error = nil;
-    AVAudioSession *session = [AVAudioSession sharedInstance];
-
-    [session setCategory:AVAudioSessionCategoryAmbient
-             withOptions:AVAudioSessionCategoryOptionMixWithOthers
-                   error:&error];
-
-    [session setActive:YES error:&error];
-
     dispatch_async(self.bassQueue, ^{
+        NSError *error = nil;
+        AVAudioSession *session = [AVAudioSession sharedInstance];
+
+        [session setCategory:AVAudioSessionCategoryAmbient
+                withOptions:AVAudioSessionCategoryOptionMixWithOthers
+                    error:&error];
+
+        [session setActive:YES error:&error];
+
         BASS_Init(-1, 44100, 0, 0, NULL);
         BASS_SetConfig(BASS_CONFIG_IOS_MIXAUDIO, 4);
     });
