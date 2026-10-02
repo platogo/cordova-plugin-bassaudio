@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<plugin xmlns="http://www.phonegap.com/ns/plugins/1.0" id="cordova-plugin-bassaudio" version="0.1.0">
+<plugin xmlns="http://www.phonegap.com/ns/plugins/1.0" id="cordova-plugin-bassaudio" version="0.2.0">
     <name>Cordova BASS Audio Library</name>
     <description>Cordova BASS Audio Library</description>
 

@@ -1,6 +1,6 @@
 {
   "name": "cordova-plugin-bassaudio",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Cordova BASS Audio Library",
   "cordova": {
     "id": "cordova-plugin-bassaudio",
