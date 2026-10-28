@@ -52,8 +52,8 @@ void CALLBACK onFadeOutSync(HSYNC handle, DWORD channel, DWORD data, void* user)
 
         [session setActive:YES error:&error];
 
+        BASS_SetConfig(BASS_CONFIG_IOS_MIXAUDIO, BASS_IOS_SESSION_AMBIENT | BASS_IOS_SESSION_MIX);
         BASS_Init(-1, 44100, 0, 0, NULL);
-        BASS_SetConfig(BASS_CONFIG_IOS_MIXAUDIO, 4);
     });
 }
 
@@ -251,6 +251,8 @@ void CALLBACK onFadeOutSync(HSYNC handle, DWORD channel, DWORD data, void* user)
         return YES;
     }
 
+    BASS_SetConfig(BASS_CONFIG_IOS_MIXAUDIO, BASS_IOS_SESSION_AMBIENT | BASS_IOS_SESSION_MIX);
+
     if (!BASS_Init(-1, 44100, 0, 0, NULL)) {
         int errorCode = BASS_ErrorGetCode();
 
@@ -261,7 +263,6 @@ void CALLBACK onFadeOutSync(HSYNC handle, DWORD channel, DWORD data, void* user)
         return NO;
     }
 
-    BASS_SetConfig(BASS_CONFIG_IOS_MIXAUDIO, 4);
     return YES;
 }
 
